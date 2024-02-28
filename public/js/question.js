@@ -292,3 +292,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 });
+
+
+const title  = document.querySelector("title")
+console.log(title.innerHTML);
+
+title.addEventListener("blur",()=>{
+    alert("opening new tab");
+    console.log("tab");
+});
