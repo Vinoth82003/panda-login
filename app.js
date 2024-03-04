@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const session = require('express-session');
+const { type } = require('os');
 // const sha256 = require('sha256');
 
 mongoose.connect('mongodb+srv://vinothg0618:vinoth112003@cluster0.fiy26nf.mongodb.net/quiz_data');
@@ -62,7 +63,12 @@ const teamSchema = new mongoose.Schema({
     images_found: { type: Number, default: 0 },
     attempts: { type: Number, default: 0 },
     score: { type: Number, default: 0 },
-    currentRound:{type: String, default: "round1"}
+    currentRound:{type: String, default: "round1"},
+    timeLapsed: {type: Number, default: 0},
+    round1_time: { type: String, default: "00:00" }, // Set round1_time to today at 9:00 AM
+    round2_time: { type: String, default: "00:00" }, // Set round2_time to today at 9:00 AM
+    round3_time: { type: String, default: "00:00" },
+    gameOver:{type: Boolean, default: false}
 });
 
 const Team = mongoose.model('Team', teamSchema);
@@ -98,13 +104,17 @@ app.get('/login', async (req, res) => {
 
             if (existingTeam) {
                 // If the team exists, add the team ID to session and redirect to dashboard
+                if (existingTeam.gameOver == true) {
+                    console.log("Game Over Already");
+                    return res.redirect('/profile');
+                }
                 req.session.teamId = existingTeam._id;
                 console.log("Team already exists");
                 return res.redirect('/dashboard');
             }
 
             // Generate random questions and images for each round
-            const numberOfRandomQuestions = 3;
+            const numberOfRandomQuestions = 16;
             const numberOfRandomImages = 3;
 
             const randomRound1Questions = await fetchRandomQuestions('round1_questions', numberOfRandomQuestions);
@@ -149,13 +159,6 @@ async function fetchRandomQuestions(round, numberOfRandomQuestions) {
     return randomQuestions;
 }
 
-async function fetchQuestions(round, index) {
-    
-    const QuestionModel = mongoose.model(`${round}_questions`, questionSchema);
-    const randomQuestions = QuestionModel.findOne().skip(round).exec();
-    console.log(randomQuestions[index]);
-    return randomQuestions;
-}
 
 app.get("/dashboard", async (req, res) => {
     // Access teamId from session
@@ -171,7 +174,6 @@ app.get("/dashboard", async (req, res) => {
             res.redirect('/');
         }
         // Now you can use team details as needed
-         // Render the dashboard view with team details
     } catch (error) {
         console.error("Error fetching team details:", error);
         res.status(500).send("Internal Server Error");
@@ -256,7 +258,77 @@ app.put('/updateAttempt', async (req, res) => {
     }
 });
 
-// Backend route to handle updating answered questions
+// Endpoint to update attempts
+app.put('/updateImageFound', async (req, res) => {
+    const teamId  = req.body.teamId;
+    const time  = req.body.time;
+    console.log(time)
+
+    try {
+        // Assuming you have a Team model defined
+        const team = await Team.findById(teamId);
+        if (!team) {
+            return res.status(404).json({ success: false, message: "Team not found" });
+        }
+        // Update the attempts
+        team.images_found++;
+        let currentRound = team.currentRound;
+        if (currentRound == "round1") {
+            team.currentRound = "round2";
+            team.round1_time = time;
+        }else if (currentRound == "round2") {
+            team.currentRound = "round3";
+            team.round2_time = time;
+        }else{
+            // game over
+            team.round3_time = time;
+            team.gameOver = true;
+            res.redirect('/profile');
+        }
+
+        team.AnsweredQuestions = [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
+        await team.save();
+        res.sendStatus(200);// Send success response
+    } catch (error) {
+        console.error("Error updating attempts:", error);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+});
+
+// Endpoint to update attempts
+app.put('/timeLapse', async (req, res) => {
+    const { teamId } = req.body;
+    try {
+        // Assuming you have a Team model defined
+        const team = await Team.findById(teamId);
+        if (!team) {
+            return res.status(404).json({ success: false, message: "Team not found" });
+        }
+        // Update the attempts
+        team.images_found++;
+        let currentRound = team.currentRound;
+        if (currentRound == "round1") {
+            team.currentRound = "round2";
+            team.round1_time = "00:00";
+        }else if (currentRound == "round2") {
+            team.currentRound = "round3";
+            team.round2_time = "00:00";
+        }else{
+            // game over
+            team.round3_time = "00:00";
+            team.gameOver = true;
+            res.redirect('/profile');
+        }
+        
+        team.AnsweredQuestions = [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
+        await team.save();
+        res.sendStatus(200);// Send success response
+    } catch (error) {
+        console.error("Error updating attempts:", error);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+});
+
 // Backend route to handle updating answered questions
 app.put('/updateAnsweredQuestions/:userId/:questionIndex/:boolValue', async (req, res) => {
     const { userId, questionIndex, boolValue } = req.params;
@@ -295,3 +367,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}/`);
 });
+

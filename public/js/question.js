@@ -31,6 +31,46 @@ let answeredQuestions = [
     false
 ];
 
+let currentTime;
+
+// Set the timer for 10 minutes
+const timerDuration = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+// Get the current time
+const startTime = Date.now();
+
+// Function to update the timer display
+function updateTimer() {
+    const elapsedTime = Date.now() - startTime;
+    const remainingTime = timerDuration - elapsedTime;
+
+    // Calculate minutes and seconds
+    const minutes = Math.floor(remainingTime / (1000 * 60));
+    const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+   
+
+    if (seconds < 10) {
+        // Display the remaining time
+        document.getElementById("timer").textContent = `0${minutes} : 0${seconds} `;
+        currentTime = `0${minutes} : 0${seconds} `
+    }else{
+        document.getElementById("timer").textContent = `0${minutes} : ${seconds} `;
+        currentTime = `0${minutes} : ${seconds} `
+    }
+
+    // Check if the timer has finished
+    if (remainingTime <= 0) {
+        clearInterval(timerInterval);
+        document.getElementById("timer").textContent = "Time's up!";
+        setTimeLapse(team_id);
+    }
+}
+
+// Update the timer display every second
+const timerInterval = setInterval(updateTimer, 1000);
+
+// Initial call timerInterval
+
 let full_screen = document.querySelector(".full_screen");
 
 full_screen.addEventListener("click",()=>{
@@ -48,6 +88,7 @@ setTimeout(() => {
     }
 
     document.querySelector(".image").setAttribute("src","/assets/img/"+(currentRoundImage.image_url));
+    console.log(currentRoundImage.Image_name);
 
 }, 500);
 
@@ -69,8 +110,8 @@ side_button.addEventListener("click",()=>{
 });
 
 function submitGuess(){
-    if(optionsContainer.querySelector("#guessImage").value.trim() == currentRoundImage.Image_name){
-        alert("correct Guess");
+    if(optionsContainer.querySelector("#guessImage").value.trim() == currentRoundImage.Image_name.trim()){
+        setImageFound(team_id);
     }else{
         alert("wrong Guess");
         closeGuess()
@@ -93,6 +134,7 @@ function closeGuess(){
     let newIndex = answeredQuestions.indexOf(false);
         if (newIndex != -1) {
             getQuestionDetails(newIndex);
+            currentindex = newIndex;
         }else{
             optionsContainer.innerHTML = ` 
                 <p class="highlight"><i class="fas fa-hand-point-right"></i> No more Options you have .... you have failed to found the image...😭 </p>
@@ -148,6 +190,45 @@ function getTeamDetails(teamid){
 }
 
 getTeamDetails(team_id);
+
+
+// Function to set timeLapsed update
+function setTimeLapse(teamId) {
+    let timeLapseXhr = new XMLHttpRequest();
+    timeLapseXhr.open('PUT', '/timeLapse', true);
+    timeLapseXhr.setRequestHeader('Content-Type', 'application/json');
+    timeLapseXhr.onreadystatechange = function() {
+        if (timeLapseXhr.readyState === XMLHttpRequest.DONE) {
+            if (timeLapseXhr.status === 200) {
+                checkAnswers()
+                window.location.href = "";
+                console.log("Time Lapse Added");
+            } else {
+                console.error("Error updating Guess:", timeLapseXhr.status);
+            }
+        }
+    };
+    timeLapseXhr.send(JSON.stringify({ teamId: teamId }));
+}
+
+// Function to send image update
+function setImageFound(teamId) {
+    let updateImageFoundXhr = new XMLHttpRequest();
+    updateImageFoundXhr.open('PUT', '/updateImageFound', true);
+    updateImageFoundXhr.setRequestHeader('Content-Type', 'application/json');
+    updateImageFoundXhr.onreadystatechange = function() {
+        if (updateImageFoundXhr.readyState === XMLHttpRequest.DONE) {
+            if (updateImageFoundXhr.status === 200) {
+                checkAnswers()
+                window.location.href = "";
+                console.log("correct Quess added");
+            } else {
+                console.error("Error updating Guess:", updateImageFoundXhr.status);
+            }
+        }
+    };
+    updateImageFoundXhr.send(JSON.stringify({  teamId: teamId , time: currentTime}));
+}
 
 
 // Function to send attempt update
@@ -219,11 +300,13 @@ function getQuestionDetails(index) {
 
 // Function to display question details
 function displayQuestion(question) {
-    questionContainer.innerHTML = `<pre><code class="python">${question.Question}</pre><code/>`;
+    let language;
+    
+    questionContainer.innerHTML = `<pre><code class="${language}">${question.Question}</pre><code/>`;
     optionsContainer.innerHTML = (`
      <p style="width:100%">Guess the Output ❓</p>
      <div>
-        <input type="text" name="guessOutput" id="guessOutput">
+        <textarea type="text" name="guessOutput" id="guessOutput"></textarea>
      </div>
      <p>${question.Answer}</p>
     `);
@@ -277,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (selectedOption) {
                 let selectedValue = selectedOption.value.trim();
                 if (selectedValue === currentQuestionResponse.question.Answer) {
-                    sendScoreUpdate(team_id, 10);
+                    sendScoreUpdate(team_id, 1);
                     displayGuess();
                     updateAnsweredQuestions(team_id, currentindex, true);
                 } else {
