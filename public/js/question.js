@@ -62,6 +62,7 @@ function updateTimer() {
     if (remainingTime <= 0) {
         clearInterval(timerInterval);
         document.getElementById("timer").textContent = "Time's up!";
+        alert("Time's up!...\n Swithcing to new round ")
         setTimeLapse(team_id);
     }
 }
@@ -111,6 +112,8 @@ side_button.addEventListener("click",()=>{
 
 function submitGuess(){
     if(optionsContainer.querySelector("#guessImage").value.trim() == currentRoundImage.Image_name.trim()){
+        document.getElementById("victoryAudio").play();
+        alert("Wow Correct Answer...!\nSwitching to new step");
         setImageFound(team_id);
     }else{
         alert("wrong Guess");
@@ -201,9 +204,17 @@ function setTimeLapse(teamId) {
     timeLapseXhr.onreadystatechange = function() {
         if (timeLapseXhr.readyState === XMLHttpRequest.DONE) {
             if (timeLapseXhr.status === 200) {
-                checkAnswers()
-                window.location.href = "";
-                console.log("Time Lapse Added");
+                // Check if there's a redirection
+                const response = JSON.parse(timeLapseXhr.responseText);
+                if (response.redirectTo) {
+                    // Redirect to the specified URL
+                    window.location.href = response.redirectTo;
+                } else {
+                    // Handle success
+                    checkAnswers();
+                    window.location.href = "";
+                    console.log("Time Lapse Added");
+                }
             } else {
                 console.error("Error updating Guess:", timeLapseXhr.status);
             }
@@ -211,6 +222,7 @@ function setTimeLapse(teamId) {
     };
     timeLapseXhr.send(JSON.stringify({ teamId: teamId }));
 }
+
 
 // Function to send image update
 function setImageFound(teamId) {
@@ -220,16 +232,30 @@ function setImageFound(teamId) {
     updateImageFoundXhr.onreadystatechange = function() {
         if (updateImageFoundXhr.readyState === XMLHttpRequest.DONE) {
             if (updateImageFoundXhr.status === 200) {
-                checkAnswers()
-                window.location.href = "";
-                console.log("correct Quess added");
+                // Check if there's a redirection
+                try {
+                    const response = JSON.parse(updateImageFoundXhr.responseText);
+                    if (response.redirectTo) {
+                        // Redirect to the specified URL
+                        window.location.href = response.redirectTo;
+                    } else {
+                        // Handle success
+                        checkAnswers();
+                        window.location.href = "";
+                        console.log("correct Guess added");
+                    }
+                } catch (error) {
+                    console.error("Error parsing JSON:", error);
+                }
             } else {
                 console.error("Error updating Guess:", updateImageFoundXhr.status);
             }
         }
     };
-    updateImageFoundXhr.send(JSON.stringify({  teamId: teamId , time: currentTime}));
+    updateImageFoundXhr.send(JSON.stringify({ teamId: teamId, time: currentTime }));
 }
+
+
 
 
 // Function to send attempt update
@@ -303,21 +329,32 @@ function getQuestionDetails(index) {
 function displayQuestion(question) {
     let language;
     
-    questionContainer.innerHTML = `<pre><code class="${language}">${question.Question}</pre><code/>`;
+    if (currentRound == "round1") {
+        language = "python"
+    }else if (currentRound == "round2") {
+        language = "c"
+    }else{
+        language = "java"
+    }
+    // Encode the question content to display it properly
+    let encodedQuestion = question.Question.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    questionContainer.innerHTML = `<pre><code class="${language}">${encodedQuestion}</code></pre>`;
     optionsContainer.innerHTML = (`
      <p style="width:100%">Guess the Output ❓</p>
      <div>
         <textarea type="text" name="guessOutput" id="guessOutput"></textarea>
      </div>
-     
+     // <p>${question.Answer}</p>
     `);
 
     // <p>${question.Answer}</p>
 
-    submitButton.style.display = "block"
+    submitButton.style.display = "block";
     submitButton.disabled = false;
     hljs.highlightAll();
 }
+
 
 function updateAnsweredQuestions(userId, questionIndex, value) {
     // Convert the boolean value to a string
@@ -366,6 +403,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let selectedValue = selectedOption.value.trim();
                 if (selectedValue === currentQuestionResponse.question.Answer) {
                     sendScoreUpdate(team_id, 1);
+                    document.getElementById("correctAudio").play();
                     displayGuess();
                     updateAnsweredQuestions(team_id, currentindex, true);
                 } else {

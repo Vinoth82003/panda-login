@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Page</title>
+</head>
+<body>
+    <link rel="stylesheet" href="css/admin.css">
+    <div class="page">
+        <div class="admin_page">
+            <div class="header">
+                <div class="logo">
+                    <img src="assets/img/user1.png" alt="admin">
+                </div>
+                <a href="/adminlogout" class="logout">logout</a>
+            </div>
+            <main class="main">
+                <aside class="aside">
+                    <ul class="side_menu">
+                        <li class="menu_title">Other Admins</li>
+                        <li class="admin_name">Admin 1 <div class="online ball"></div></li>
+                        <li class="admin_name">Admin 2 <div class="offline ball"></div></li>
+                        <li class="admin_name">Admin 3 <div class="online ball"></div></li>
+                        <li class="admin_name">Admin 4 <div class="online ball"></div></li>
+                    </ul>
+                </aside>
+                <section class="main_section">
+                    <div class="section_header">
+                        <div class="tag">Admin <div class="online ball"></div></div>
+                    </div>
+                    <div class="tabel_container">
+                        <table class="admin_table">
+                            <thead class="table_head">
+                                <th>Sno</th>
+                                <th>Team Name</th>
+                                <th>Current Round</th>
+                                <th>Score</th>
+                                <th>Images Found</th>
+                                <th>Attempts</th>
+                                <th>Game Over</th>
+                                <th>Logins</th>
+                                <th>LogOuts</th>
+                            </thead>
+                            <tbody class="tbody">
+                                <% teams.forEach((team, index) => { %>
+                                <tr>
+                                    <td><%= index + 1 %></td>
+                                    <td><%= team.team_name %></td>
+                                    <td><%= team.currentRound %></td>
+                                    <td><%= team.score %></td>
+                                    <td><%= team.images_found %></td>
+                                    <td><%= team.attempts %></td>
+                                    <td><%= team.gameOver ? 'Yes' : 'No' %></td>
+                                    <td><%= team.login_punches.join(', ') %></td>
+                                    <td><%= team.logout_punches.join(', ') %></td>
+                                </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                </section>
+            </main>
+        </div>
+    </div>
+    <script src="js/admin.js"></script>
+</body>
+</html>

@@ -3,9 +3,12 @@ const mongoose = require('mongoose');
 const path = require('path');
 const session = require('express-session');
 const { type } = require('os');
+const { exit } = require('process');
 // const sha256 = require('sha256');
+let connection_string = "mongodb+srv://vinothg0618:vinoth112003@cluster0.fiy26nf.mongodb.net";
+// let connection_string = "mongodb://127.0.0.1:27017";
 
-mongoose.connect('mongodb+srv://vinothg0618:vinoth112003@cluster0.fiy26nf.mongodb.net/quiz_data');
+mongoose.connect(`${connection_string}/quiz_data`);
 const db = mongoose.connection;
 
 db.once('open', () => {
@@ -74,6 +77,20 @@ const teamSchema = new mongoose.Schema({
 });
 
 const Team = mongoose.model('Team', teamSchema);
+
+const adminSchema = new mongoose.Schema({
+    name: String,
+    password: String,
+    isActive: Boolean,
+    loginTime: String,
+    logoutTime: String
+});
+
+const Admin = mongoose.model('Admin', adminSchema);
+
+// const newAdmin = new Admin({
+//     name
+// })
 
 const app = express();
 
@@ -272,7 +289,7 @@ app.put('/updateAttempt', async (req, res) => {
 app.put('/updateImageFound', async (req, res) => {
     const teamId  = req.body.teamId;
     const time  = req.body.time;
-    console.log(time)
+    console.log(time);
 
     try {
         // Assuming you have a Team model defined
@@ -286,24 +303,30 @@ app.put('/updateImageFound', async (req, res) => {
         if (currentRound == "round1") {
             team.currentRound = "round2";
             team.round1_time = time;
-        }else if (currentRound == "round2") {
+        } else if (currentRound == "round2") {
             team.currentRound = "round3";
             team.round2_time = time;
-        }else{
+        } else {
             // game over
             team.round3_time = time;
             team.gameOver = true;
-            res.render('profile', { team: team });
+            await team.save();
+
+            // Send a JSON response indicating redirection
+            return res.status(200).json({ redirectTo: '/profile' });
         }
 
         team.AnsweredQuestions = [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
         await team.save();
-        res.sendStatus(200);// Send success response
+        res.status(200).json({ success: true, message: "Update successful" });
     } catch (error) {
-        console.error("Error updating attempts:", error);
+        console.error("Error updating Image found:", error);
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 });
+
+
+
 
 // Endpoint to update attempts
 app.put('/timeLapse', async (req, res) => {
@@ -315,29 +338,31 @@ app.put('/timeLapse', async (req, res) => {
             return res.status(404).json({ success: false, message: "Team not found" });
         }
         // Update the attempts
-        team.images_found++;
         let currentRound = team.currentRound;
         if (currentRound == "round1") {
             team.currentRound = "round2";
             team.round1_time = "00:00";
-        }else if (currentRound == "round2") {
+        } else if (currentRound == "round2") {
             team.currentRound = "round3";
             team.round2_time = "00:00";
-        }else{
+        } else {
             // game over
             team.round3_time = "00:00";
             team.gameOver = true;
-            res.render('profile', { team: team });
+            await team.save();
+            // Send a JSON response indicating redirection
+            return res.status(200).json({ redirectTo: '/profile' });
         }
-        
+
         team.AnsweredQuestions = [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
         await team.save();
-        res.sendStatus(200);// Send success response
+        res.status(200).json({ success: true, message: "Time lapse updated successful" });
     } catch (error) {
         console.error("Error updating attempts:", error);
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 });
+
 
 // Backend route to handle updating answered questions
 app.put('/updateAnsweredQuestions/:userId/:questionIndex/:boolValue', async (req, res) => {
@@ -378,6 +403,45 @@ app.get('/profile', async (req, res) => {
 
 });
 
+app.get('/admin', async (req, res) => {
+    try {
+        let adminId = req.session.adminId ;
+
+        const admin = await Admin.findById(adminId);
+       if (admin) {
+         // Fetch all teams from the database
+         const teams = await Team.find();
+         const admins = await Admin.find();
+         res.render('admin', { teams: teams, admins: admins });
+       }else{
+        res.sendFile(path.join(__dirname, 'public', 'adminlogin.html'));
+    }
+    } catch (error) {
+        console.error('Error fetching teams:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+app.get('/teamData', async (req, res) => {
+    try {
+        let adminId = req.session.adminId ;
+
+        const admin = await Admin.findById(adminId);
+       if (admin) {
+         // Fetch all teams from the database
+         const teams = await Team.find();
+         const admins = await Admin.find();
+         res.send({ teams: teams, admins: admins, currentAdmin: admin.name });
+
+       }else{
+            res.sendFile(path.join(__dirname, 'public', 'adminlogin.html'));
+       }
+    } catch (error) {
+        console.error('Error fetching teams:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
 // Update logout route to record logout time
 app.get('/logout', async (req, res) => {
     // Destroy the session
@@ -402,6 +466,77 @@ app.get('/logout', async (req, res) => {
                 }
                 // Redirect the user to the login page or any other desired page
                 res.redirect('/');
+            } catch (error) {
+                console.error("Error occurred:", error);
+                res.status(500).send("Internal Server Error");
+            }
+        }
+    });
+});
+
+app.post('/adminlogin', async (req, res) => {
+    const name = req.body.name;
+    const password = req.body.password;
+    // const admin = await Admin.findOne({ name });
+    // console.log(admin);
+    console.log(name, password);
+    if (name == undefined || name == "" || name == null) {
+        res.sendFile(path.join(__dirname, 'public', 'adminlogin.html'));
+
+    } else {
+
+        try {
+            // Check if the team name already exists in the database
+            const admin = await Admin.findOne({ name });
+            console.log(admin);
+            console.log(admin.password);
+            console.log(password);
+            if (admin && admin.password == password) {
+                req.session.adminId = admin._id;
+                const currentTime = new Date();
+                const options = { timeZone: 'Asia/Kolkata', hour12: false };
+                const formattedTime = currentTime.toLocaleString('en-US', options).split(', ')[1];
+                admin.loginTime = formattedTime;
+                admin.isActive = true;
+                await admin.save();
+                res.redirect("/admin");
+            }else{
+                res.sendFile(path.join(__dirname, 'public', 'adminlogin.html'));
+            }
+
+
+        } catch (error) {
+            console.error("Error occurred:", error);
+            res.status(500).send("Internal Server Error");
+        }
+
+    }
+});
+
+// Update logout route to record logout time
+app.get('/adminlogout', async (req, res) => {
+    // Destroy the session
+    const admin_name = req.session.adminId;
+    req.session.destroy(async (err) => {
+        if (err) {
+            console.error('Error destroying session:', err);
+            res.status(500).send('Internal Server Error');
+        } else {
+            try {
+                
+                // Record logout time
+                const admin = await Admin.findById(admin_name);
+                if (admin) {
+                    const currentTime = new Date();
+                    const options = { timeZone: 'Asia/Kolkata', hour12: false };
+                    const formattedTime = currentTime.toLocaleString('en-US', options).split(', ')[1]; // Extract time part
+                    admin.logoutTime = (formattedTime);
+                    admin.isActive = false;
+                    // team.logout_punches.push(new Date());
+                    await admin.save();
+                }
+                // Redirect the user to the login page or any other desired page
+                res.sendFile(path.join(__dirname, 'public', 'adminlogin.html'));
             } catch (error) {
                 console.error("Error occurred:", error);
                 res.status(500).send("Internal Server Error");
