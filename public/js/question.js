@@ -132,13 +132,14 @@ function displayGuess(){
 function closeGuess(){
     submitButton.style.display = "block"
     let newIndex = answeredQuestions.indexOf(false);
-        if (newIndex != -1) {
-            getQuestionDetails(newIndex);
-            currentindex = newIndex;
+        if (newIndex == -1) {
+            optionsContainer.innerHTML = ` 
+            <p class="highlight"><i class="fas fa-hand-point-right"></i> No more Options you have .... you have failed to found the image...😭 </p>
+        `
         }else{
             optionsContainer.innerHTML = ` 
-                <p class="highlight"><i class="fas fa-hand-point-right"></i> No more Options you have .... you have failed to found the image...😭 </p>
-            `
+            <p class="highlight"><i class="fas fa-hand-point-right"></i>Select any other question from the grid..❓</p>
+        `
         }
 }
 function checkAnswers(){
@@ -308,8 +309,10 @@ function displayQuestion(question) {
      <div>
         <textarea type="text" name="guessOutput" id="guessOutput"></textarea>
      </div>
-     <p>${question.Answer}</p>
+     
     `);
+
+    // <p>${question.Answer}</p>
 
     submitButton.style.display = "block"
     submitButton.disabled = false;
@@ -353,6 +356,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+
+
     // Handle submission of the answer
     submitButton.onclick = function() {
         if (currentQuestionResponse) {
@@ -377,10 +382,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-const title  = document.querySelector("title")
-console.log(title.innerHTML);
 
-title.addEventListener("blur",()=>{
-    alert("opening new tab");
-    console.log("tab");
-});

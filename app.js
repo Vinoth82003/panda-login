@@ -68,7 +68,9 @@ const teamSchema = new mongoose.Schema({
     round1_time: { type: String, default: "00:00" }, // Set round1_time to today at 9:00 AM
     round2_time: { type: String, default: "00:00" }, // Set round2_time to today at 9:00 AM
     round3_time: { type: String, default: "00:00" },
-    gameOver:{type: Boolean, default: false}
+    gameOver:{type: Boolean, default: false},
+    login_punches: [{ type: String }],
+    logout_punches: [{ type: String }]
 });
 
 const Team = mongoose.model('Team', teamSchema);
@@ -102,7 +104,14 @@ app.get('/login', async (req, res) => {
             // Check if the team name already exists in the database
             const existingTeam = await Team.findOne({ team_name });
 
+            const currentTime = new Date();
+            const options = { timeZone: 'Asia/Kolkata', hour12: false };
+            const formattedTime = currentTime.toLocaleString('en-US', options).split(', ')[1]; // Extract time part
+            
             if (existingTeam) {
+                req.session.teamId = existingTeam._id;
+                existingTeam.login_punches.push(formattedTime)
+                await existingTeam.save();
                 // If the team exists, add the team ID to session and redirect to dashboard
                 if (existingTeam.gameOver == true) {
                     console.log("Game Over Already");
@@ -139,7 +148,8 @@ app.get('/login', async (req, res) => {
                 round3_image: {
                     image_url: randomImages[2].Image_Url,
                     Image_name: randomImages[2].Image_name
-                }
+                },
+                login_punches:[formattedTime]
             });
 
             const savedTeam = await newTeam.save();
@@ -283,7 +293,7 @@ app.put('/updateImageFound', async (req, res) => {
             // game over
             team.round3_time = time;
             team.gameOver = true;
-            res.redirect('/profile');
+            res.render('profile', { team: team });
         }
 
         team.AnsweredQuestions = [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
@@ -317,7 +327,7 @@ app.put('/timeLapse', async (req, res) => {
             // game over
             team.round3_time = "00:00";
             team.gameOver = true;
-            res.redirect('/profile');
+            res.render('profile', { team: team });
         }
         
         team.AnsweredQuestions = [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
@@ -350,21 +360,57 @@ app.put('/updateAnsweredQuestions/:userId/:questionIndex/:boolValue', async (req
 
 
 
-app.get('/logout', (req, res) => {
+app.get('/profile', async (req, res) => {
     // Destroy the session
-    req.session.destroy(err => {
+    const teamId = req.session.teamId;
+    const team = await Team.findById(teamId);
+    if (teamId) {
+        console.log("profile "+teamId);
+        console.log("Game Over "+team.gameOver);
+        if (teamId && team.gameOver == true) {
+            res.render('profile', { team: team });
+        }else{
+            res.redirect("/")
+        }
+    }else{
+        res.redirect("/")
+    }
+
+});
+
+// Update logout route to record logout time
+app.get('/logout', async (req, res) => {
+    // Destroy the session
+    const teamId = req.session.teamId;
+    req.session.destroy(async (err) => {
         if (err) {
             console.error('Error destroying session:', err);
             res.status(500).send('Internal Server Error');
         } else {
-            // Redirect the user to the login page or any other desired page
-            res.redirect('/');
+            try {
+                
+                // Record logout time
+                const team = await Team.findById(teamId);
+                if (team) {
+                    const currentTime = new Date();
+                    const options = { timeZone: 'Asia/Kolkata', hour12: false };
+                    const formattedTime = currentTime.toLocaleString('en-US', options).split(', ')[1]; // Extract time part
+                    team.logout_punches.push(formattedTime);
+
+                    // team.logout_punches.push(new Date());
+                    await team.save();
+                }
+                // Redirect the user to the login page or any other desired page
+                res.redirect('/');
+            } catch (error) {
+                console.error("Error occurred:", error);
+                res.status(500).send("Internal Server Error");
+            }
         }
     });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running at http://localhost:${PORT}/`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is listening on port ${PORT}`);
 });
-
