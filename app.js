@@ -38,16 +38,28 @@ const teamSchema = new mongoose.Schema({
     round1: [{
         question_id: mongoose.Schema.Types.ObjectId,
         Question: String,
+        A: String,
+        B: String,
+        C: String,
+        D: String,
         Answer: String,
     }],
     round2: [{
         question_id: mongoose.Schema.Types.ObjectId,
         Question: String,
+        A: String,
+        B: String,
+        C: String,
+        D: String,
         Answer: String,
     }],
     round3: [{
         question_id: mongoose.Schema.Types.ObjectId,
         Question: String,
+        A: String,
+        B: String,
+        C: String,
+        D: String,
         Answer: String,
     }],
     round1_image: {
@@ -151,9 +163,9 @@ app.get('/login', async (req, res) => {
             // Create a new team with random questions and images
             const newTeam = new Team({
                 team_name: team_name,
-                round1: randomRound1Questions.map(question => ({ question_id: question._id, Question: question.Question, Answer: question.Answer })),
-                round2: randomRound2Questions.map(question => ({ question_id: question._id, Question: question.Question, Answer: question.Answer })),
-                round3: randomRound3Questions.map(question => ({ question_id: question._id, Question: question.Question, Answer: question.Answer })),
+                round1: randomRound1Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.ANSWER })),
+                round2: randomRound2Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.ANSWER })),
+                round3: randomRound3Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.ANSWER })),
                 round1_image: {
                     image_url: randomImages[0].Image_Url,
                     Image_name: randomImages[0].Image_name
@@ -196,7 +208,11 @@ app.get("/dashboard", async (req, res) => {
         const team = await Team.findById(teamId);
 
         if (team) {
-            res.render('dashboard', { team: team });
+            if (team.gameOver != true) {
+                res.render('dashboard', { team: team });   
+            }else{
+                res.redirect("/profile");
+            }
         }else{
             res.redirect('/');
         }

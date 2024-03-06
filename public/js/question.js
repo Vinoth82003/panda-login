@@ -305,7 +305,8 @@ function getQuestionDetails(index) {
                 let response;
                 try {
                     response = JSON.parse(xhr.responseText);
-                    console.log("Response:", response);
+
+                    // console.log("Response:", response);
                     document.querySelector(".load_question").classList.remove("active");
                 } catch (error) {
                     console.error("Error parsing response:", error);
@@ -313,6 +314,7 @@ function getQuestionDetails(index) {
                 }
                 if (response.success) {
                     currentQuestionResponse = response; // Store the response
+                    
                     displayQuestion(response.question);
                 } else {
                     console.error("Error:", response.message);
@@ -328,6 +330,7 @@ function getQuestionDetails(index) {
 // Function to display question details
 function displayQuestion(question) {
     let language;
+    console.log("log: ",question);
     
     if (currentRound == "round1") {
         language = "python"
@@ -343,9 +346,20 @@ function displayQuestion(question) {
     optionsContainer.innerHTML = (`
      <p style="width:100%">Guess the Output ❓</p>
      <div>
-        <textarea type="text" name="guessOutput" id="guessOutput"></textarea>
+        <label>
+            <input type="radio" name="guessAnswer" value="A"> ${question.A}
+        </label>
+        <label>
+            <input type="radio" name="guessAnswer" value="B"> ${question.B}
+        </label>
+        <label>
+            <input type="radio" name="guessAnswer" value="C"> ${question.C}
+        </label>
+        <label>
+            <input type="radio" name="guessAnswer" value="D"> ${question.D}
+        </label>
      </div>
-     // <p>${question.Answer}</p>
+     
     `);
 
     // <p>${question.Answer}</p>
@@ -398,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle submission of the answer
     submitButton.onclick = function() {
         if (currentQuestionResponse) {
-            let selectedOption = optionsContainer.querySelector('.question_options #guessOutput');
+            let selectedOption = optionsContainer.querySelector('input[type="radio"]:checked');
             if (selectedOption) {
                 let selectedValue = selectedOption.value.trim();
                 if (selectedValue === currentQuestionResponse.question.Answer) {
@@ -408,6 +422,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateAnsweredQuestions(team_id, currentindex, true);
                 } else {
                     sendAttemptUpdate(team_id);
+                    document.getElementById("wrongAudio").play();
                     updateAnsweredQuestions(team_id, currentindex, false);
                 }
             } else {
