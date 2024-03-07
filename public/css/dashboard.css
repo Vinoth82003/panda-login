@@ -310,7 +310,6 @@
     min-height: 400px;
     background: #fff;
     border-radius: 5px;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -320,6 +319,7 @@
     font-weight: 400;
     font-style: normal;
     z-index: 0;
+    overflow: scroll;
 }
 
 .questio_container.active{
@@ -625,3 +625,12 @@ pre code.hljs {
     color: #d4d4d4 !important;
 }
 
+.showQuestions div pre{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}

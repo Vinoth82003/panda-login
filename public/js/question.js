@@ -34,7 +34,7 @@ let answeredQuestions = [
 let currentTime;
 
 // Set the timer for 10 minutes
-const timerDuration = 10 * 60 * 1000; // 10 minutes in milliseconds
+const timerDuration = 15 * 60 * 1000; // 10 minutes in milliseconds
 
 // Get the current time
 const startTime = Date.now();
@@ -346,19 +346,21 @@ function displayQuestion(question) {
     optionsContainer.innerHTML = (`
      <p style="width:100%">Guess the Output ❓</p>
      <div>
+     <pre>
         <label>
-            <input type="radio" name="guessAnswer" value="A"> ${question.A}
+            <input type="radio" name="guessAnswer" value="A"> ${question.A.trim()}
         </label>
         <label>
-            <input type="radio" name="guessAnswer" value="B"> ${question.B}
+            <input type="radio" name="guessAnswer" value="B"> ${question.B.trim()}
         </label>
         <label>
-            <input type="radio" name="guessAnswer" value="C"> ${question.C}
+            <input type="radio" name="guessAnswer" value="C"> ${question.C.trim()}
         </label>
         <label>
-            <input type="radio" name="guessAnswer" value="D"> ${question.D}
+            <input type="radio" name="guessAnswer" value="D"> ${question.D.trim()}
         </label>
-     </div>
+        </pre>
+    </div>
      
     `);
 

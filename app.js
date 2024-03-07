@@ -163,9 +163,9 @@ app.get('/login', async (req, res) => {
             // Create a new team with random questions and images
             const newTeam = new Team({
                 team_name: team_name,
-                round1: randomRound1Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.ANSWER })),
-                round2: randomRound2Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.ANSWER })),
-                round3: randomRound3Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.ANSWER })),
+                round1: randomRound1Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.answer })),
+                round2: randomRound2Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.answer })),
+                round3: randomRound3Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.answer })),
                 round1_image: {
                     image_url: randomImages[0].Image_Url,
                     Image_name: randomImages[0].Image_name
