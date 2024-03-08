@@ -386,7 +386,7 @@ input{
     display: flex;
     align-items: center;
     justify-content: center;
-    background-image: url("assets/img/cloud.png");
+    background-image: url("../assets/img/cloud.png");
     background-size: 100% 100%;
 }
 

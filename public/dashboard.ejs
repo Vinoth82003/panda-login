@@ -21,6 +21,7 @@
         <input type="hidden" id="hiddenInput" value="0">
         <header class="header">
             <div class="event">PIXEL QUEST</div>
+            <button class="skip"  onclick="skipround()"><i class="fas fa-forward"></i> Skip to next round</button>
             <div class="timer">
                 <div class="time_icon">
                     <i class="fas fa-hourglass-half"></i>
@@ -57,6 +58,10 @@
                 <i class="fas fa-chevron-left"></i>
             </button>
             <ul class="activities_list">
+                <li class="activity">
+                    <div class="activity_title currentroundTitle">Current Round</div>
+                    <div class="activity_value currentround" style="font-size: 20px;"></div>
+                </li>
                 <li class="activity">
                     <div class="activity_title">Images Found</div>
                     <div class="activity_value imagefound">00</div>

@@ -5,21 +5,32 @@ function displayTable(teams){
     let tbody = document.querySelector(".tbody");
     tbody.innerHTML = "";
     let index = 1;
-    teams.forEach(team => {
-        let tr = document.createElement("tr")
-        tr.innerHTML = (`
-            <td> ${index ++} </td>
-            <td> ${team.team_name} </td>
-            <td> ${team.currentRound} </td>
-            <td> ${team.score} </td>
-            <td> ${team.images_found} </td>
-            <td> ${team.attempts} </td>
-            <td> ${team.gameOver ? 'Yes' : 'No'} </td>
-            <td> ${team.login_punches.join(', ')} </td>
-            <td> ${team.logout_punches.join(', ')} </td>
-        `)
-        tbody.appendChild(tr);
-    });
+    if (teams.length != 0) {
+        teams.forEach(team => {
+            let tr = document.createElement("tr")
+            tr.className = `${team.gameOver ? 'done' : ''}`
+            tr.className = `${team.malpractice.length >0 ?"malpractice":"" }`
+            tr.innerHTML = (`
+                <td> ${index ++} </td>
+                <td> ${team.team_name} </td>
+                <td> ${team.currentRound} </td>
+                <td> ${team.score} </td>
+                <td> ${team.images_found} </td>
+                <td> ${team.attempts} </td>
+                <td> ${team.gameOver ? 'Yes' : 'No'} </td>
+                <td> ${team.malpractice.join(', ') } </td>
+                <td> ${team.login_punches.join(', ')} </td>
+                <td> ${team.logout_punches.join(', ')} </td>
+                <td> ${team.gameOverTime? team.gameOverTime: "not finished"} </td>
+            `)
+            tbody.appendChild(tr);
+        });
+    }else{
+    tbody.innerHTML = ` <tr>
+                            <td colspan="11" style="text-align:center">No Participants Yet</td>
+                        </tr>`
+    }
+
 }
 
 function displayAdmin(admins){

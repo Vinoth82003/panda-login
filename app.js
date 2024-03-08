@@ -85,7 +85,10 @@ const teamSchema = new mongoose.Schema({
     round3_time: { type: String, default: "00:00" },
     gameOver:{type: Boolean, default: false},
     login_punches: [{ type: String }],
-    logout_punches: [{ type: String }]
+    logout_punches: [{ type: String }],
+    malpractice: [{type: String}],
+    gameOverTime: {type: String},
+
 });
 
 const Team = mongoose.model('Team', teamSchema);
@@ -120,12 +123,16 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 
+const currentTime = new Date();
+const options = { timeZone: 'Asia/Kolkata', hour12: false };
+const CurrentformattedTime = currentTime.toLocaleString('en-US', options).split(', ')[1];
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 app.get('/login', async (req, res) => {
-    const team_name = req.query.team_name;
+    const team_name = req.query.team_name.toLowerCase();
     if (team_name == undefined || team_name == "" || team_name == null) {
         res.sendFile(path.join(__dirname, 'public', 'login.html'));
     } else {
@@ -162,7 +169,7 @@ app.get('/login', async (req, res) => {
 
             // Create a new team with random questions and images
             const newTeam = new Team({
-                team_name: team_name,
+                team_name: team_name.toLowerCase(),
                 round1: randomRound1Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.answer })),
                 round2: randomRound2Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.answer })),
                 round3: randomRound3Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.answer })),
@@ -326,6 +333,7 @@ app.put('/updateImageFound', async (req, res) => {
             // game over
             team.round3_time = time;
             team.gameOver = true;
+            team.gameOverTime = CurrentformattedTime;
             await team.save();
 
             // Send a JSON response indicating redirection
@@ -365,6 +373,7 @@ app.put('/timeLapse', async (req, res) => {
             // game over
             team.round3_time = "00:00";
             team.gameOver = true;
+            team.gameOverTime = CurrentformattedTime;
             await team.save();
             // Send a JSON response indicating redirection
             return res.status(200).json({ redirectTo: '/profile' });
@@ -399,6 +408,61 @@ app.put('/updateAnsweredQuestions/:userId/:questionIndex/:boolValue', async (req
     }
 });
 
+// Backend route to handle updating Malpractices
+app.put('/updateMalpractice/:userId/:type', async (req, res) => {
+    const { userId,type } =  req.params;
+    console.log(userId)
+    console.log(type);
+    try {
+        const user = await Team.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        // Update AnsweredQuestions array
+        user.malpractice.push(type);
+        user.gameOver = true;
+        user.gameOverTime = CurrentformattedTime;
+        // Save updated user data back to the database
+        await user.save();
+        res.status(200).json({ success: true, redirectTo: "profile" });
+    } catch (error) {
+        console.error("Error updating malpractice user:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+// Backend route to handle Skip round
+app.put('/skipround/:userId/:timeing', async (req, res) => {
+    const { userId, timeing } =  req.params;
+    console.log(userId);
+    console.log(timeing);
+    try {
+        const user = await Team.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        // Update AnsweredQuestions array
+        if (user.currentRound == "round1") {
+            user.currentRound = "round2";
+            user.round1_time = timeing;
+        }else if (user.currentRound == "round2") {
+            user.currentRound = "round3"
+            user.round2_time = timeing;
+        } else if (user.currentRound == "round3") {
+            user.round3_time = timeing;
+            user.gameOver = true;
+            user.gameOverTime = CurrentformattedTime;
+        // Save updated user data back to the database
+        }
+
+        await user.save();
+        res.status(200).json({ success: true, message: "round skipped successfully" });
+    } catch (error) {
+        console.error("Error updating malpractice user:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
 
 
 app.get('/profile', async (req, res) => {
@@ -421,42 +485,47 @@ app.get('/profile', async (req, res) => {
 
 app.get('/admin', async (req, res) => {
     try {
-        let adminId = req.session.adminId ;
+        let adminId = req.session.adminId;
 
         const admin = await Admin.findById(adminId);
-       if (admin) {
-         // Fetch all teams from the database
-         const teams = await Team.find();
-         const admins = await Admin.find();
-         res.render('admin', { teams: teams, admins: admins });
-       }else{
-        res.sendFile(path.join(__dirname, 'public', 'adminlogin.html'));
-    }
+
+        if (admin) {
+             // Fetch all teams from the database and sort by gameOverTime
+            const teams = await Team.find().sort({ gameOverTime: 1 });
+            // Fetch all admins ordered by isActive field
+            const admins = await Admin.find().sort({ isActive: -1 });
+            res.render('admin', { teams: teams, admins: admins });
+        } else {
+            res.sendFile(path.join(__dirname, 'public', 'adminlogin.html'));
+        }
     } catch (error) {
         console.error('Error fetching teams:', error);
         res.status(500).send('Internal Server Error');
     }
 });
+
 
 app.get('/teamData', async (req, res) => {
     try {
-        let adminId = req.session.adminId ;
+        let adminId = req.session.adminId;
 
         const admin = await Admin.findById(adminId);
-       if (admin) {
-         // Fetch all teams from the database
-         const teams = await Team.find();
-         const admins = await Admin.find();
-         res.send({ teams: teams, admins: admins, currentAdmin: admin.name });
+        if (admin) {
+            // Fetch all teams from the database and sort by gameOverTime
+            const teams = await Team.find().sort({ gameOverTime: -1 });
+            // Fetch all admins ordered by isActive field
+            const admins = await Admin.find().sort({ isActive: -1 });
+            res.send({ teams: teams, admins: admins, currentAdmin: admin.name });
 
-       }else{
+        } else {
             res.sendFile(path.join(__dirname, 'public', 'adminlogin.html'));
-       }
+        }
     } catch (error) {
         console.error('Error fetching teams:', error);
         res.status(500).send('Internal Server Error');
     }
 });
+
 
 // Update logout route to record logout time
 app.get('/logout', async (req, res) => {
@@ -491,8 +560,8 @@ app.get('/logout', async (req, res) => {
 });
 
 app.post('/adminlogin', async (req, res) => {
-    const name = req.body.name;
-    const password = req.body.password;
+    const name = req.body.name.toLowerCase();
+    const password = req.body.password.toLowerCase();
     // const admin = await Admin.findOne({ name });
     // console.log(admin);
     console.log(name, password);
@@ -507,7 +576,7 @@ app.post('/adminlogin', async (req, res) => {
             console.log(admin);
             console.log(admin.password);
             console.log(password);
-            if (admin && admin.password == password) {
+            if (admin && admin.password.toLowerCase() == password) {
                 req.session.adminId = admin._id;
                 const currentTime = new Date();
                 const options = { timeZone: 'Asia/Kolkata', hour12: false };

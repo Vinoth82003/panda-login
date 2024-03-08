@@ -152,6 +152,7 @@ td{
     gap: 15px;
     position: relative;
     width: 100%;
+    text-transform: capitalize;
 }
 
 p.logtime {
@@ -166,8 +167,10 @@ p.logtime {
   
 /* Style the scrollbar track */
 ::-webkit-scrollbar {
-  width: 8px; /* Width of the scrollbar */
-  height: 8px; /* Width of the scrollbar */
+  width:  5px; /* Width of the scrollbar */
+  height: 5px; /* Width of the scrollbar */
+  margin-top: 10px;
+  margin-left: 10px;
 }
 
 /* Style the scrollbar thumb */
@@ -185,4 +188,7 @@ p.logtime {
 ::-webkit-scrollbar-thumb:hover {
   background-color: #555; /* Color of the thumb on hover */
 }
-  
+
+.table_container {
+    overflow: auto;
+}

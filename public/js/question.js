@@ -31,38 +31,47 @@ let answeredQuestions = [
     false
 ];
 
+let round1 = "15:00";
+let round2 = "15:00";
+let round3 = "15:00";
+
+
 let currentTime;
 
 // Set the timer for 10 minutes
 const timerDuration = 15 * 60 * 1000; // 10 minutes in milliseconds
 
 // Get the current time
-const startTime = Date.now();
+let startTime = localStorage.getItem("startTime");
+if (!startTime) {
+    startTime = Date.now();
+    localStorage.setItem("startTime", startTime);
+} else {
+    startTime = parseInt(startTime);
+}
 
 // Function to update the timer display
 function updateTimer() {
-    const elapsedTime = Date.now() - startTime;
+    const currentTimeLocal = Date.now();
+    const elapsedTime = currentTimeLocal - startTime;
     const remainingTime = timerDuration - elapsedTime;
 
     // Calculate minutes and seconds
     const minutes = Math.floor(remainingTime / (1000 * 60));
     const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-   
 
-    if (seconds < 10) {
-        // Display the remaining time
-        document.getElementById("timer").textContent = `0${minutes} : 0${seconds} `;
-        currentTime = `0${minutes} : 0${seconds} `
-    }else{
-        document.getElementById("timer").textContent = `0${minutes} : ${seconds} `;
-        currentTime = `0${minutes} : ${seconds} `
-    }
+    // Display the remaining time
+    const displayMinutes = minutes < 10 ? `0${minutes}` : minutes;
+    const displaySeconds = seconds < 10 ? `0${seconds}` : seconds;
+    document.getElementById("timer").textContent = `${displayMinutes}:${displaySeconds}`;
+    currentTime = `${displayMinutes}:${displaySeconds}`;
 
     // Check if the timer has finished
     if (remainingTime <= 0) {
         clearInterval(timerInterval);
         document.getElementById("timer").textContent = "Time's up!";
-        alert("Time's up!...\n Swithcing to new round ")
+        localStorage.clear();
+        alert("Time's up! Switching to new round");
         setTimeLapse(team_id);
     }
 }
@@ -70,7 +79,19 @@ function updateTimer() {
 // Update the timer display every second
 const timerInterval = setInterval(updateTimer, 1000);
 
-// Initial call timerInterval
+// Restore timer if page was refreshed
+const storedTime = localStorage.getItem("currentTime");
+if (storedTime) {
+    const storedStartTime = parseInt(localStorage.getItem("startTime"));
+    const elapsedTime = parseInt(storedTime) - storedStartTime;
+    startTime = storedStartTime - elapsedTime;
+}
+
+// Store current time to localStorage every second
+setInterval(() => {
+    localStorage.setItem("currentTime", Date.now());
+}, 1000);
+
 
 let full_screen = document.querySelector(".full_screen");
 
@@ -82,10 +103,16 @@ full_screen.addEventListener("click",()=>{
 setTimeout(() => {
     if (currentRound == "round1") {
         currentRoundImage = team.round1_image;
+        document.querySelector(".currentround").innerHTML = '<i class="fab fa-python icon"></i> PYTHON';
+        document.querySelector(".currentroundTitle").innerHTML = 'Round 1 ';
     }else if (currentRound == "round2") {
         currentRoundImage = team.round2_image;
+        document.querySelector(".currentroundTitle").innerHTML = 'Round 2';
+        document.querySelector(".currentround").innerHTML = '<i class="fab fa-cuttlefish icon"></i> C';
     }else{
         currentRoundImage = team.round3_image;
+        document.querySelector(".currentroundTitle").innerHTML = 'Round 3 ';
+        document.querySelector(".currentround").innerHTML = '<i class="fab fa-java icon"></i>JAVA';
     }
 
     document.querySelector(".image").setAttribute("src","/assets/img/"+(currentRoundImage.image_url));
@@ -109,6 +136,32 @@ side_button.addEventListener("click",()=>{
     side_bar.classList.toggle("active");
     main.classList.toggle("active");
 });
+
+function skipround(){
+    let confirmationMessage = confirm("Are you sure.. dou you want to skip the round..?");
+    if (confirmationMessage) {
+        fetch(`/skipround/${team_id}/${currentTime}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok.');
+        })
+        .then(data =>{
+           console.log(data);
+           localStorage.clear();
+           window.location.href = ""; 
+        })
+        .catch(error => {
+            console.error('Error updating answered questions:', error);
+        });
+    }
+}
 
 function submitGuess(){
     if(optionsContainer.querySelector("#guessImage").value.trim() == currentRoundImage.Image_name.trim()){
@@ -138,6 +191,7 @@ function closeGuess(){
         if (newIndex == -1) {
             optionsContainer.innerHTML = ` 
             <p class="highlight"><i class="fas fa-hand-point-right"></i> No more Options you have .... you have failed to found the image...😭 </p>
+            <button class="skip"  onclick="skipround()"><i class="fas fa-forward"></i> Skip to next round</button> 
         `
         }else{
             optionsContainer.innerHTML = ` 
@@ -147,11 +201,15 @@ function closeGuess(){
 }
 function checkAnswers(){
     masks.forEach(function(mask, index){
+        masks.forEach(ms => {
+            ms.classList.remove("clicked");
+        });
         if (answeredQuestions[index] == true) {
             mask.classList.add("active");
         }else{
             mask.classList.remove("active");
         }
+        mask.classList.add("clicked");
     })
 }
 
@@ -241,6 +299,7 @@ function setImageFound(teamId) {
                     } else {
                         // Handle success
                         checkAnswers();
+                        localStorage.clear();
                         window.location.href = "";
                         console.log("correct Guess added");
                     }
@@ -436,5 +495,56 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 });
 
+function setMalpractice(type){
+    fetch(`/updateMalpractice/${team_id}/${type}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Network response was not ok.');
+    })
+    .then(data =>{
+        if (data.redirectTo) {
+            console.log(data.redirectTo);
+            window.location.href = `/${data.redirectTo}`;
+        }
+    })
+    .catch(error => {
+        console.error('Error updating answered questions:', error);
+    });
+}
 
+// document.addEventListener("visibilitychange", function() {
+//     if (document.visibilityState === 'hidden') {
+//         let type = encodeURIComponent("open new tab or minimize the tab");
+//         // User switched to another tab or minimized the window
+//         setMalpractice(type);
+//         console.log("User switched to another tab or minimized the window");
+
+//     } else {
+//         // User came back to the tab
+//         console.log("User came back to the tab");
+//     }
+// });  
+
+// window.addEventListener('beforeunload', function(event) {
+//     // Show confirmation message
+//     var confirmationMessage = 'Are you sure you want to reload the page?';
+//     event.returnValue = confirmationMessage; // Gecko, Trident, Chrome 34+
+//     return confirmationMessage; // Gecko, WebKit, Chrome <34
+//   });
+//   console.log("page load");
+
+// window.addEventListener('unload', function() {
+//   // Make a fetch request when the page is about to reload
+//   let type = encodeURIComponent("try to load the page");
+//       // User switched to another tab or minimized the window
+//       setMalpractice(type);
+// });
+  
 
