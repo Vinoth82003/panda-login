@@ -1,8 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Protest+Revolution&family=Rubik+Bubbles&display=swap');
+
 *{
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     list-style: none;
+}
+
+.welcome_text{
+    position: absolute;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.welcome{
+    font-size: 45px;
+    color: #3b6e46;
+    font-family: "Rubik Bubbles", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.title{
+    font-size: 70px;
+    color: #269153;
+    font-family: "Protest Revolution", sans-serif;
+    font-weight: 400;
+    font-style: normal;
 }
 
 .login_page{
@@ -15,14 +39,33 @@
     overflow-x: hidden;
 }
 
+.bamboo{
+    max-height: 100vh;
+    overflow: hidden;
+    max-width: 100vw;
+}
+
+.bamboo img{
+    width: 100%;
+    height: 100%;
+}
+
+.panda_box{
+    position: absolute;
+    z-index: 100;
+}
+
 .panda{
     position: relative;
     width: 300px;
-    height: 300px;
+    height: 320px;
     border-radius: 5px;
     display: flex;
     justify-content: center;
     margin-top: 250px;
+    background: #0000009d;
+    padding: 10px;
+    backdrop-filter: blur(3px);
 }
 
 .panda_head{
@@ -386,8 +429,6 @@ input{
     display: flex;
     align-items: center;
     justify-content: center;
-    background-image: url("../assets/img/cloud.png");
-    background-size: 100% 100%;
 }
 
 .text{

@@ -1,6 +1,10 @@
-Image_Url,Image_name
-img1.png,image1
-img2.png,image2
-img1.png,image3
-img2.png,image4
-img1.png,image5
+Image_qn,Image_Url,Image_name
+Guess the Product Name..?,Alexa.png,Alexa
+Guess the Logo ..?,docker.jpeg,Docker
+Guess the Logo ..?,firebase.png,Firebase
+Guess the Component ..?,gpu.jpg,GPU or Graphics processing unit
+Guess the Database Name ..?,mariadb.png,Mariadb
+Guess the Database Name ..?,postgresql.jpeg,Postgresql
+Guess the Robot Name ..?,sophia.png,sophia
+Guess the Statue Name ..?,statue of libarty.jpg, statue of liberty
+Guess the Name of Image ..?,bit coin.jpeg,BIT coin

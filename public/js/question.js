@@ -1,4 +1,5 @@
 // Global variables
+
 let team_id = document.getElementById("team_id").value;
 let currentindex = 0;
 let masks = document.querySelectorAll('.mask');
@@ -10,7 +11,8 @@ let quessInput = optionsContainer.querySelector("#guessImage");
 let closeguess = optionsContainer.querySelector(".closeguess");
 let currentQuestionResponse; // Variable to store the current question response
 let currentRound;
-let currentRoundImage;
+let currentRoundImage =  {};
+let currentRoundImageQuestion;
 let team;
 let answeredQuestions = [
     false,
@@ -116,9 +118,10 @@ setTimeout(() => {
     }
 
     document.querySelector(".image").setAttribute("src","/assets/img/"+(currentRoundImage.image_url));
-    console.log(currentRoundImage.Image_name);
+    // console.log(currentRoundImage.Image_name);
+    // console.log(currentRoundImage.Image_name);
 
-}, 500);
+}, 1000);
 
 
 let profile = document.querySelector(".profile");
@@ -163,8 +166,8 @@ function skipround(){
     }
 }
 
-function submitGuess(){
-    if(optionsContainer.querySelector("#guessImage").value.trim() == currentRoundImage.Image_name.trim()){
+function submit(){
+    if(optionsContainer.querySelector("#guessImage").value.trim().toLowerCase().includes(currentRoundImage.Image_name.trim().toLowerCase())){
         document.getElementById("victoryAudio").play();
         alert("Wow Correct Answer...!\nSwitching to new step");
         setImageFound(team_id);
@@ -175,8 +178,11 @@ function submitGuess(){
 }
 
 function displayGuess(){
-    questionContainer.textContent = "Guess the image...?";
+    questionContainer.innerHTML = ``;
     optionsContainer.innerHTML = (`
+        <div>
+            QN:${currentRoundImage.Image_qn ? currentRoundImage.Image_qn: "Guess the image...?!"}
+        </div>
         <button class="closeguess" onclick="closeGuess()">X</button> 
         <input type="text" name="quessImage" id="guessImage"> 
         <br>
@@ -373,7 +379,7 @@ function getQuestionDetails(index) {
                 }
                 if (response.success) {
                     currentQuestionResponse = response; // Store the response
-                    
+                    console.log(currentQuestionResponse);
                     displayQuestion(response.question);
                 } else {
                     console.error("Error:", response.message);
@@ -547,4 +553,3 @@ function setMalpractice(type){
 //       setMalpractice(type);
 // });
   
-

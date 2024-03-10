@@ -236,7 +236,7 @@
     background: #ffffff;
     border-radius: 5px;
     cursor: pointer;
-    border: none;
+    border: 2px solid #a3a3a3;
 }
 
 .mask:hover{

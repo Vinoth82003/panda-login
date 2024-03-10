@@ -24,6 +24,7 @@ const questionSchema = new mongoose.Schema({
 });
 
 const imageSchema = new mongoose.Schema({
+    Image_qn: String,
     Image_url: String,
     Image_name: String
 });
@@ -63,14 +64,17 @@ const teamSchema = new mongoose.Schema({
         Answer: String,
     }],
     round1_image: {
+        Image_qn: String,
         image_url: String,
         Image_name: String,
     },
     round2_image: {
+        Image_qn: String,
         image_url: String,
         Image_name: String,
     },
     round3_image: {
+        Image_qn: String,
         image_url: String,
         Image_name: String,
     },
@@ -174,14 +178,17 @@ app.get('/login', async (req, res) => {
                 round2: randomRound2Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.answer })),
                 round3: randomRound3Questions.map(question => ({ question_id: question._id, Question: question.question, A: question.A, B: question.B, C: question.C, D: question.D, Answer: question.answer })),
                 round1_image: {
+                    Image_qn: randomImages[0].Image_qn,
                     image_url: randomImages[0].Image_Url,
                     Image_name: randomImages[0].Image_name
                 }, // Assuming randomImages is an array of 3 images
                 round2_image: {
+                    Image_qn: randomImages[1].Image_qn,
                     image_url: randomImages[1].Image_Url,
                     Image_name: randomImages[1].Image_name
                 },
                 round3_image: {
+                    Image_qn: randomImages[2].Image_qn,
                     image_url: randomImages[2].Image_Url,
                     Image_name: randomImages[2].Image_name
                 },
